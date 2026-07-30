@@ -1,0 +1,23 @@
+name: Limpar Snapshots
+
+on:
+  schedule:
+    # 4h00 BRT (UTC-3) == 7h00 UTC
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Apagar snapshots com mais de 7 dias
+        run: node src/cleanup-snapshots.js
+        env:
+          X_API_KEY: ${{ secrets.X_API_KEY }}

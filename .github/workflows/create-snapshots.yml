@@ -1,0 +1,23 @@
+name: Criar Snapshots
+
+on:
+  schedule:
+    # 3h00 BRT (UTC-3) == 6h00 UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  create:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Criar snapshots das VMs
+        run: node src/create-snapshots.js
+        env:
+          X_API_KEY: ${{ secrets.X_API_KEY }}

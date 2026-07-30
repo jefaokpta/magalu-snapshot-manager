@@ -1,0 +1,14 @@
+{
+  "name": "magalu-snapshot-manager",
+  "version": "1.0.0",
+  "description": "Criação e limpeza automática de snapshots de VMs no Magalu Cloud",
+  "private": true,
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20.6.0"
+  },
+  "scripts": {
+    "create": "node --env-file=.env src/create-snapshots.js",
+    "cleanup": "node --env-file=.env src/cleanup-snapshots.js"
+  }
+}
