@@ -90,6 +90,29 @@ Ambos também aceitam `workflow_dispatch`, ou seja, podem ser disparados **manua
 
 O secret é injetado como variável de ambiente `X_API_KEY` durante a execução dos scripts.
 
+### Mantendo o agendamento ativo (keepalive)
+
+O GitHub **desativa automaticamente workflows agendados** em repositórios públicos após 60 dias sem nenhuma atividade no repositório. Para evitar isso, o workflow `cleanup-snapshots.yml` tem um passo final que **commita um log simples** da execução (`logs/execucoes.log`) de volta para a branch padrão:
+
+```yaml
+- name: Registrar execução (keepalive)
+  if: always()
+  run: |
+    mkdir -p logs
+    echo "- $(date -u '+%Y-%m-%d %H:%M:%S') UTC - limpeza executada" >> logs/execucoes.log
+    git config user.name "github-actions[bot]"
+    git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+    git commit -m "chore: execução da limpeza ..."
+    git push origin HEAD:${{ github.ref_name }}
+```
+
+Detalhes:
+
+- Esse passo roda com `if: always()`, ou seja, **executa mesmo se a limpeza falhar** — assim a atividade no repo é garantida todos os dias e o agendamento nunca é desativado por inatividade.
+- O `GITHUB_TOKEN` precisa de `permissions: contents: write` (declarado no workflow) para conseguir pushar.
+- Commits feitos pelo bot do GitHub Actions **não** disparam novos workflows (sem risco de loop) — e estes workflows não têm gatilho `push` de qualquer forma.
+- O arquivo `logs/execucoes.log` é append-only (uma linha por execução) e funciona também como um histórico simples de auditoria. A exceção `!logs/execucoes.log` no `.gitignore` garante que ele seja versionado.
+
 ---
 
 ## Estrutura do projeto
@@ -106,6 +129,7 @@ magalu-snapshot-manager/
 ├── .env                        # X_API_KEY (local, ignorado pelo git)
 ├── .env.example                # modelo do .env
 ├── .gitignore
+├── logs/                       # gerado no CI — histórico de execuções (keepalive)
 ├── package.json                # sem dependências
 └── README.md
 ```
